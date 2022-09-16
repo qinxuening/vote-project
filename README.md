@@ -11,7 +11,7 @@ vote-project
 ```
 
 ### 投票系统管理员服务流程图
-![流程图](./document/images/投票系统管理员部分.jpg)
+![流程图](https://github.com/qinxuening/vote-project/raw/master/document/images/投票系统管理员部分.jpg)
 
 ### 投票系统用户服务流程图
 ![流程图](./document/images/投票系统用户部分.jpg)
