@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vote.admin.dao.VoteDetailsDao">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.vote.entity.VoteDetails">
+        <id column="id" property="id" />
+        <result column="candidate_id" property="candidateId" />
+        <result column="email" property="email" />
+        <result column="id_number" property="idNumber" />
+        <result column="vote_time" property="voteTime" />
+    </resultMap>
+    <select id="getFirstVoteDetails"
+            resultType="com.vote.entity.VoteDetails">
+        SELECT
+            id,email
+        FROM
+            vote_details
+        ORDER BY id ASC
+        LIMIT 1
+    </select>
+    <select id="getVoteDetailsList" resultType="com.vote.entity.VoteDetails">
+        SELECT
+            id,email
+        FROM
+            vote_details
+        WHERE
+            id > #{LastMaxId}
+        LIMIT 2
+    </select>
+</mapper>

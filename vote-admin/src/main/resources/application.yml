@@ -1,0 +1,23 @@
+server:
+  port: 8088
+#  servlet:
+#    context-path: /vote_admin
+
+spring:
+  application:
+    name: vate_admin
+  profiles:
+    active: dev
+
+mybatis-plus:
+  #  type-aliases-package: com.yumsxi.mbutil
+  mapper-locations:
+    - classpath:dao/*.xml
+    - classpath:com/**/mapper/*.xml
+  global-config:
+    db-config:
+      id-type: auto
+  configuration:
+    auto-mapping-behavior: partial
+    map-underscore-to-camel-case: true
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #打印完整带参数SQL语句
