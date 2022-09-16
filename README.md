@@ -1,4 +1,4 @@
-#简易投票系统
+# 简易投票系统
 ##### 版权归作者所有，未经允许，不可用于商业用途
 ## 项目结构
 
@@ -52,6 +52,7 @@ curl -L https://get.daocloud.io/docker/compose/releases/download/1.24.1/docker-c
 chmod +x /usr/local/bin/docker-compose
 sudo chmod a+x /usr/local/bin/docker-compose #设置权限
 ```
+- docker-compose.yml 允许脚本内存
 ```yaml
 version: '3'
 services:
@@ -186,6 +187,7 @@ CREATE TABLE `email_send_error` (
 | 1005                     |选举未开始                       |
 | 1006                     |投票失败，请稍后再试！              |
 | 1007                     |选举已经结束，无法再投票             |
+| 1008                     |候选人不存在                       |
 ### 异常枚举
 ```java
 package com.vote.common.api;
@@ -222,6 +224,87 @@ public enum ResultCode implements ErrorCode{
 ```
 ### Error Handling 全局异常处理
 ![全局异常处理](./document/images/全局异常处理.png)
+```java
+package com.vote.common.exception;
+
+import com.vote.common.api.CommonResult;
+import com.vote.common.api.ResultCode;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.NoHandlerFoundException;
+
+/**
+ * 全局异常处理类
+ * @author qinxuening
+ * @date 2022/9/12 23:11
+ */
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    /**
+     * 全局异常捕获手动断言异常和基础异常
+     * @param e
+     * @return
+     */
+    @ResponseBody
+    @ExceptionHandler(value = ApiException.class)
+    public CommonResult handleBaseException(ApiException e) {
+        if (e.getErrorCode() != null) {
+            return CommonResult.failed(e.getErrorCode());
+        }
+        return CommonResult.failed(e.getMessage());
+    }
+
+    /**
+     * 全局异常捕获数据校验异常
+     * @param e
+     * @return
+     */
+    @ResponseBody
+    @ExceptionHandler(value = MethodArgumentNotValidException.class)
+    public CommonResult handleArgumentValidException(MethodArgumentNotValidException e) {
+        return getCommonResult(e.getBindingResult());
+    }
+
+    /**
+     * 全局异常捕获参数校验绑定异常处理，比如将@Validated写在方法参数，而不是类上
+     * @param e
+     * @return
+     */
+    @ResponseBody
+    @ExceptionHandler(value = BindException.class)
+    public CommonResult handleBindException(BindException e) {
+        return getCommonResult(e.getBindingResult());
+    }
+
+    /**
+     * 全局异常捕获资源，服务未找到
+     * @param e
+     * @return
+     */
+    @ResponseBody
+    @ExceptionHandler(value = NoHandlerFoundException.class)
+    public CommonResult handleBindException(NoHandlerFoundException e) {
+        return CommonResult.failed(ResultCode.NOT_FOUND);
+    }
+
+    private CommonResult getCommonResult(BindingResult bindingResult) {
+        String message = null;
+        if (bindingResult.hasErrors()) {
+            FieldError fieldError = bindingResult.getFieldError();
+            if (fieldError != null) {
+                message = fieldError.getField()+fieldError.getDefaultMessage();
+            }
+        }
+        return CommonResult.validateFailed(message);
+    }
+}
+```
 
 ## API文档
 ### 1、简易投票系统admin服务API

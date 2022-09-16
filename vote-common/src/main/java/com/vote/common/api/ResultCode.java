@@ -10,7 +10,7 @@ public enum ResultCode implements ErrorCode{
     VALIDATE_FAILED(1008, "参数检验失败"),
     NOT_FOUND(404, "资源，服务未找到"),
     ELECTION_NOT_START(1005, "选举未开始"),
-    ELECTION_NOT_END(1007, "选举已经结束，无法再投票");
+    ELECTION_END(1007, "选举已经结束，无法再投票");
     private long code;
     private String message;
 

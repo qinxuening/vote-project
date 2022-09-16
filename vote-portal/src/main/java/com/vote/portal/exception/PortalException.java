@@ -9,7 +9,8 @@ import com.vote.common.api.ErrorCode;
  */
 public enum PortalException implements ErrorCode {
     YOU_HAD_VOTED(1004, "您已经投票过，不可重复投票"),
-    VOTE_FAIL(1006, "投票失败，请稍后再试！");
+    VOTE_FAIL(1006, "投票失败，请稍后再试！"),
+    CANDIDATE_NOT_EXIST(1008, "候选人不存在");
 
     private long code;
     private String message;
