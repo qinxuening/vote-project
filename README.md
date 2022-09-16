@@ -52,7 +52,7 @@ curl -L https://get.daocloud.io/docker/compose/releases/download/1.24.1/docker-c
 chmod +x /usr/local/bin/docker-compose
 sudo chmod a+x /usr/local/bin/docker-compose #设置权限
 ```
-- docker-compose.yml 允许脚本内存
+- docker-compose.yml 运行脚本脚本内容
 ```yaml
 version: '3'
 services:
