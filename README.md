@@ -7,7 +7,7 @@ vote-project
 ├── vote-admin -- 投票系统管理员服务
 ├── vote-common -- 工具类及通用代码模块
 ├── vote-mbutil -- MyBatisPlusGenerator脚手架，生成的数据库操作代码模块
-└── mall-portal -- 投票系统用户服务
+└── vote-portal -- 投票系统用户服务
 ```
 
 ### 投票系统管理员服务流程图
