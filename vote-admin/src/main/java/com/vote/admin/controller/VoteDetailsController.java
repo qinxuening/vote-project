@@ -39,7 +39,7 @@ public class VoteDetailsController {
         return CommonResult.success(iCommonCacheService.getAllCandidateVoteResult(votingTopicId));
     }
 
-    @ApiOperation("查看投给该候选人用户列表列表")
+    @ApiOperation("查看投给该候选人用户列表")
     @GetMapping(value = "/voteForCandidateUsersList")
     @ResponseBody
     @ApiImplicitParams({

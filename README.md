@@ -749,7 +749,7 @@ public class GlobalExceptionHandler {
 ```
 
 
-## 查看投给该候选人用户列表列表
+## 查看投给该候选人用户列表
 
 
 **接口地址**:`/vote-admin/voteForCandidateUsersList`
