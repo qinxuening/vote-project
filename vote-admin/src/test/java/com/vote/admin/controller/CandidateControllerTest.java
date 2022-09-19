@@ -55,6 +55,7 @@ public class CandidateControllerTest {
         candidateParam.setCandidateNickname("qinxuening");
         candidateParam.setIdNumber("A123456(7)");
         candidateParam.setAge(30);
+        candidateParam.setVotingTopicId(1);
         candidateParam.setCampaignSlogan("实现中华民族伟大复兴");
         candidateParam.setGender(1);
         mockMvc.perform(MockMvcRequestBuilders

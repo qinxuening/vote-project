@@ -20,8 +20,8 @@ public class BaseMetaObjectHandler implements MetaObjectHandler {
             if ("addTime".equals(str)) {
                 this.setFieldValByName("addTime", new Date(), metaObject);
             }
-            if ("createdTime".equals(str)) {
-                this.setFieldValByName("createdTime", new Date(), metaObject);
+            if ("createTime".equals(str)) {
+                this.setFieldValByName("createTime", new Date(), metaObject);
             }
             if ("updateTime".equals(str)) {
                 this.setFieldValByName("updateTime", new Date(), metaObject);

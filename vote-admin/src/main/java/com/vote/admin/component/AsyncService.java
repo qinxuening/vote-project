@@ -42,36 +42,36 @@ public class AsyncService {
      * 异步发送邮件,指定线程池
      */
     @Async("threadPoolTaskExecutor")
-    public void sendEmail() throws InterruptedException {
+    public void sendEmail(Integer votingTopicId) throws InterruptedException {
         log.info("===========================开始发送选举投票结果邮件===============================");
         // 获取第一条数据，取第一个id
-        VoteDetails voteDetails = voteDetailsDao.getFirstVoteDetails();
+        VoteDetails voteDetails = voteDetailsDao.getFirstVoteDetails(votingTopicId);
         if (voteDetails != null && voteDetails.getId() != null) {
             // 发送第一条数据
             try {
-                mailService.sendSimpleMail(from, voteDetails.getEmail(), Constants.SUBJECT, JSON.toJSONString(iCommonCacheService.getAllCandidateVoteResult()));
+                mailService.sendSimpleMail(from, voteDetails.getEmail(), Constants.SUBJECT, JSON.toJSONString(iCommonCacheService.getAllCandidateVoteResult(votingTopicId)));
             } catch (Exception e) {
-                log.error(String.format("发送邮件异常：%s , 未发送成功数据：%s ", e.getMessage(), JSON.toJSONString(voteDetails)));
-                saveSendErrorInfo(e.getMessage(), JSON.toJSONString(voteDetails));
+                log.error(String.format("发送邮件异常：%s , 未发送成功数据：%s , 场次 %s ", e.getMessage(), JSON.toJSONString(voteDetails), votingTopicId));
+                saveSendErrorInfo(e.getMessage(), votingTopicId, JSON.toJSONString(voteDetails));
             }
             Integer lastMaxId = voteDetails.getId();
             while (lastMaxId != null) {
                 Thread.sleep(1000);
                 // 批量获取投票者
-                List<VoteDetails> voteDetailsList = voteDetailsDao.getVoteDetailsList(lastMaxId);
+                List<VoteDetails> voteDetailsList = voteDetailsDao.getVoteDetailsList(lastMaxId, votingTopicId);
                 if (CollUtil.isNotEmpty(voteDetailsList)) {
                     lastMaxId = voteDetailsList.get(voteDetailsList.size() - 1).getId();
                     try {
                         // 批量发送
-                        mailService.sendBatchMail(from, voteDetailsList, JSON.toJSONString(iCommonCacheService.getAllCandidateVoteResult()));
+                        mailService.sendBatchMail(from, voteDetailsList, JSON.toJSONString(iCommonCacheService.getAllCandidateVoteResult(votingTopicId)));
                     } catch (Exception e) {
-                        saveSendErrorInfo(e.getMessage(), JSON.toJSONString(voteDetailsList));
-                        log.error(String.format("批量发送邮件异常：%s , 未发送成功数据：%s ", e.getMessage(), JSON.toJSONString(voteDetailsList)));
+                        saveSendErrorInfo(e.getMessage(), votingTopicId, JSON.toJSONString(voteDetailsList));
+                        log.error(String.format("批量发送邮件异常：%s , 未发送成功数据：%s , 场次 %s ", e.getMessage(), JSON.toJSONString(voteDetailsList), votingTopicId));
                     }
                 } else {
                     lastMaxId = null;
                 }
-                log.info(String.format("当前发送lastMaxId： %s ", lastMaxId));
+                log.info(String.format("当前发送lastMaxId： %s ,场次 %s ", lastMaxId, votingTopicId));
             }
 
         }
@@ -83,9 +83,10 @@ public class AsyncService {
      * @param errorMessage 发送失败信息
      * @param sendData 发送邮件
      */
-    void saveSendErrorInfo(String errorMessage, String sendData) {
+    void saveSendErrorInfo(String errorMessage, Integer votingTopicId,  String sendData) {
         EmailSendError emailSendError = new EmailSendError();
         emailSendError.setResponseMessage(errorMessage);
+        emailSendError.setVotingTopicId(votingTopicId);
         emailSendError.setSendEmailJson(sendData);
         emailSendErrorMapper.insert(emailSendError);
     }

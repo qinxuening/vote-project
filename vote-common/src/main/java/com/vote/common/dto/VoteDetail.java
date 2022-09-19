@@ -13,8 +13,11 @@ public class VoteDetail {
     @ApiModelProperty(value = "候选人编号")
     private Integer id;
 
+    @ApiModelProperty(value = "投票场次")
+    private Integer votingTopicId;
+
     @ApiModelProperty(value = "候选人")
-    private String candidate_full_name;
+    private String candidateFullName;
 
     @ApiModelProperty(value = "得票数")
     private Integer votesCount;

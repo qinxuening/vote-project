@@ -15,15 +15,17 @@ public interface IVoteDetailsService extends IService<VoteDetails>{
     /**
      * 查看投给该候选⼈的⽤⼾列表
      * @param candidateId 候选人id
+     * @param votingTopicId 选举场次id
      * @param pageSize 每页大小
      * @param pageNum 页码
      * @return
      */
-    Page<VoteDetails> voteList(Integer candidateId, Integer pageSize, Integer pageNum);
+    Page<VoteDetails> voteList(Integer candidateId, Integer votingTopicId, Integer pageSize, Integer pageNum);
 
     /**
      * 查询选举最终结果
+     * @param votingTopicId 选举场次id
      * @return
      */
-    List<VoteDetail> getAllVoteResult();
+    List<VoteDetail> getAllVoteResult(Integer votingTopicId);
 }

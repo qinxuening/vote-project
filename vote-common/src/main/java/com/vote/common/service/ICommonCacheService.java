@@ -1,7 +1,6 @@
 package com.vote.common.service;
 
 import com.vote.common.dto.VoteDetail;
-import com.vote.entity.SysSettings;
 
 import java.util.List;
 
@@ -11,14 +10,9 @@ import java.util.List;
  */
 public interface ICommonCacheService {
     /**
-     * 获取选举开始结束缓存
-     * @return
-     */
-    SysSettings getDoElectionInfo();
-
-    /**
      * 获取所有候选人得票情况
+     * @param votingTopicId 投票场次id
      * @return
      */
-    List<VoteDetail> getAllCandidateVoteResult();
+    List<VoteDetail> getAllCandidateVoteResult(Integer votingTopicId);
 }

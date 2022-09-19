@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -15,6 +16,10 @@ import javax.validation.constraints.NotNull;
 @ApiModel(value = "投票填写参数")
 @Data
 public class VoteParam {
+    @NotNull(message = "投票场次id不能为空")
+    @ApiModelProperty(value = "投票场次id" , required = true)
+    private Integer votingTopicId;
+
     @NotNull(message = "候选人id")
     @ApiModelProperty(value = "候选人id")
     private Integer candidateId;

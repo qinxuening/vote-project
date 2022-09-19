@@ -29,6 +29,9 @@ public class Candidate implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
+    @ApiModelProperty(value = "投票场次id")
+    private Integer votingTopicId;
+
     @ApiModelProperty(value = "候选人全名")
     private String candidateFullName;
 

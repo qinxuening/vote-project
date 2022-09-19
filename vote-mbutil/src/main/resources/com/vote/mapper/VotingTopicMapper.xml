@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vote.mapper.VotingTopicMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.vote.entity.VotingTopic">
+        <id column="id" property="id" />
+        <result column="topic_name" property="topicName" />
+        <result column="topic_describe" property="topicDescribe" />
+        <result column="status" property="status" />
+        <result column="start_time" property="startTime" />
+        <result column="end_time" property="endTime" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+
+</mapper>

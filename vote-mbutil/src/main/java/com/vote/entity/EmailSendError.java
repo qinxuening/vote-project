@@ -29,6 +29,9 @@ public class EmailSendError implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
+    @ApiModelProperty(value = "投票场次id")
+    private Integer votingTopicId;
+
     @ApiModelProperty(value = "失败原因")
     private String responseMessage;
 

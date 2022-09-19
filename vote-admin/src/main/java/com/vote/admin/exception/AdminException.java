@@ -9,9 +9,10 @@ import com.vote.common.api.ErrorCode;
  */
 public enum AdminException implements ErrorCode {
     ADD_CANDIDATE_FAIL(1000, "添加候选人失败"),
-    EXIST_THIS_CANDIDATE(1001, "候选人已存在，不可重复添加"),
+    EXIST_THIS_CANDIDATE(1001, "该场次候选人已存在，不可重复添加"),
     ELECTION_IS_OVER(1002, "选举已经结束，不可重复操作"),
-    ELECTION_IS_DOING(1003, "选举已经开始，不可重复操作");
+    ELECTION_IS_DOING(1003, "选举已经开始，不可重复操作"),
+    ADD_VOTING_TOPIC_FAILD(1009, "添加投票场次失败");
 
     private long code;
     private String message;

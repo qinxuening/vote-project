@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.vote.admin.dto.CandidateParam;
 import com.vote.admin.exception.AdminException;
 import com.vote.admin.service.ICandidateService;
+import com.vote.common.api.ResultCode;
 import com.vote.common.constant.Constants;
 import com.vote.common.exception.GlobalAsserts;
 import com.vote.common.service.IRedisCacheService;
+import com.vote.common.util.CommonUtilService;
 import com.vote.entity.Candidate;
 import com.vote.mapper.CandidateMapper;
 import org.springframework.beans.BeanUtils;
@@ -26,16 +28,23 @@ public class CandidateServiceImpl extends ServiceImpl<CandidateMapper, Candidate
 
     @Override
     public void addCandidate(CandidateParam candidateParam) {
-        Candidate candidateResult = this.getOne(Wrappers.<Candidate>lambdaQuery().eq(Candidate::getIdNumber, candidateParam.getIdNumber()));
+        // 检测投票场次是否存在
+        if (CommonUtilService.findVotingTopicInfo(candidateParam.getVotingTopicId()) == null) {
+            GlobalAsserts.fail(ResultCode.NOT_EXSIT_VOTING_TOPIC);
+        }
+        //判断候选人是否存在
+        Candidate candidateResult = this.getOne(Wrappers.<Candidate>lambdaQuery()
+                .eq(Candidate::getIdNumber, candidateParam.getIdNumber())
+                .eq(Candidate::getVotingTopicId, candidateParam.getVotingTopicId()));
         if (candidateResult == null) {
             Candidate candidate = new Candidate();
             BeanUtils.copyProperties(candidateParam, candidate);
             Integer id = baseMapper.insert(candidate);
             if ( id <= 0) GlobalAsserts.fail(AdminException.ADD_CANDIDATE_FAIL);
             // redis 初始化候选人得票情况，全部赋0值
-            iRedisCacheService.set(Constants.CANDIDATE_COUNT_PRE + candidate.getId(), 0);
+            iRedisCacheService.set(Constants.CANDIDATE_COUNT_PRE + candidateParam.getVotingTopicId() + candidate.getId(), 0);
             // 添加候选人信息到redis中，方便后续快速查询
-            iRedisCacheService.sAdd(Constants.CANDIDATE_INFO, candidate);
+            iRedisCacheService.sAdd(Constants.CANDIDATE_INFO + candidateParam.getVotingTopicId(), candidate);
         } else {
             GlobalAsserts.fail(AdminException.EXIST_THIS_CANDIDATE);
         }

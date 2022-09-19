@@ -53,6 +53,7 @@ public class VoteControllerTest {
         List<VoteDetail> voteDetailList = new ArrayList<>();
         VoteParam voteParam = new VoteParam();
         voteParam.setCandidateId(2);
+        voteParam.setVotingTopicId(1);
         voteParam.setEmail("234234234@qq.com");
         voteParam.setIdNumber("A123456(0)");
         Mockito.when(iVoteService.vote(voteParam)).thenReturn(voteDetailList);

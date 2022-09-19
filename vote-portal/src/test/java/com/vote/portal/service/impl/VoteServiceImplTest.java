@@ -1,12 +1,11 @@
 package com.vote.portal.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.vote.common.dto.VoteDetail;
 import com.vote.common.exception.ApiException;
-import com.vote.common.service.ICommonCacheService;
 import com.vote.common.service.IRedisCacheService;
-import com.vote.entity.SysSettings;
+import com.vote.common.util.CommonUtilService;
 import com.vote.entity.VoteDetails;
+import com.vote.entity.VotingTopic;
 import com.vote.portal.dto.VoteParam;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,6 +14,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.web.WebAppConfiguration;
@@ -31,12 +32,10 @@ import static org.junit.Assert.assertNotNull;
 @SpringBootTest
 @WebAppConfiguration
 @RunWith(PowerMockRunner.class)
+@PrepareForTest({CommonUtilService.class})
 public class VoteServiceImplTest {
     @InjectMocks
     private VoteServiceImpl voteService;
-
-    @Mock
-    private ICommonCacheService iCommonCacheService;
 
     @Mock
     private IRedisCacheService iRedisCacheService;
@@ -49,7 +48,8 @@ public class VoteServiceImplTest {
 
     @Test(expected = ApiException.class)
     public void vote() {
-        Mockito.when(iCommonCacheService.getDoElectionInfo()).thenReturn(new SysSettings());
+        PowerMockito.mockStatic(CommonUtilService.class);
+        Mockito.when(CommonUtilService.findVotingTopicInfo(Mockito.anyInt())).thenReturn(new VotingTopic());
         VoteDetails voteDetails = new VoteDetails();
         voteDetails.setCandidateId(2);
         voteDetails.setEmail("22424555@qq.com");

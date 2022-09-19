@@ -19,7 +19,7 @@ import java.util.Scanner;
 
 /**
  * MyBatisPlus 代码生成器，仅生成entity，mapper，mapper.xml文件
- * 1）请输入表名，多个英文逗号分割：例如：candidate,sys_settings,vote_details
+ * 1）请输入表名，多个英文逗号分割：例如：candidate,voting_topic,vote_details
  * @author qinxuening
  * @date 2022/9/13 9:35
  */

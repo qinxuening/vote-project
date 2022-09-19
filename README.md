@@ -11,7 +11,7 @@ vote-project
 ```
 
 ### 投票系统管理员服务流程图
-![流程图](/document/images/投票系统管理员部分.jpg)
+![流程图admin](./document/images/投票系统管理员部分.jpg)
 
 ### 投票系统用户服务流程图
 ![流程图](./document/images/投票系统用户部分.jpg)
@@ -52,7 +52,7 @@ curl -L https://get.daocloud.io/docker/compose/releases/download/1.24.1/docker-c
 chmod +x /usr/local/bin/docker-compose
 sudo chmod a+x /usr/local/bin/docker-compose #设置权限
 ```
-- docker-compose.yml 运行脚本脚本内容
+- docker-compose.yml 运行脚本内容
 ```yaml
 version: '3'
 services:
@@ -91,6 +91,7 @@ docker-compose up -d
 ```mysql
 CREATE TABLE `candidate` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增id',
+  `voting_topic_id` int(11) NOT NULL COMMENT '投票场次id',
   `candidate_full_name` varchar(100) NOT NULL COMMENT '候选人全名',
   `id_number` char(10) NOT NULL COMMENT '候选人身份证号',
   `candidate_nickname` varchar(100) DEFAULT NULL COMMENT '候选人昵称',
@@ -98,43 +99,46 @@ CREATE TABLE `candidate` (
   `gender` tinyint(1) NOT NULL COMMENT '性别(1男，2女)',
   `campaign_slogan` text DEFAULT NULL COMMENT '竞选口号',
   `add_time` datetime DEFAULT NULL COMMENT '添加候选人时间',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COMMENT='候选人表';
+  PRIMARY KEY (`id`),
+  KEY `voting_topic_id` (`voting_topic_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='候选人表';
 ```
 ```mysql
 CREATE TABLE `vote_details` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增id',
+  `voting_topic_id` int(11) NOT NULL COMMENT '投票场次id',
   `candidate_id` int(11) NOT NULL COMMENT '候选人id',
   `email` varchar(100) NOT NULL COMMENT '投票者邮箱',
   `id_number` char(10) NOT NULL COMMENT '投票者身份证号',
   `vote_time` datetime NOT NULL COMMENT '投票时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `id_number` (`id_number`),
-  KEY `candidate_id` (`candidate_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COMMENT='投票详情表';
+  KEY `candidate_id` (`candidate_id`),
+  KEY `voting_topic_id` (`voting_topic_id`),
+  KEY `id_number` (`id_number`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='投票详情表';
 ```
 ```mysql
-CREATE TABLE `sys_settings` (
+CREATE TABLE `voting_topic` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增id',
-  `group_code` varchar(255) NOT NULL COMMENT '组code',
-  `field_name` varchar(255) NOT NULL COMMENT '字段名称',
-  `field_value` text DEFAULT NULL COMMENT '字段数值',
-  `status` tinyint(1) NOT NULL DEFAULT 1 COMMENT '状态（1启用，2关闭），默认1',
-  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
-  `create_time` datetime NOT NULL COMMENT '创建时间',
-  `update_time` datetime NOT NULL COMMENT '更新时间',
-  PRIMARY KEY (`id`),
-  KEY `group_code` (`group_code`,`field_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COMMENT='系统配置表';
+  `topic_name` varchar(50) NOT NULL COMMENT '场次主题名称',
+  `topic_describe` varchar(255) DEFAULT NULL COMMENT '场次主题描述',
+  `status` tinyint(1) DEFAULT 0 COMMENT '状态（0未开始，1启用，2关闭），默认0',
+  `start_time` datetime DEFAULT NULL COMMENT '投票开始时间',
+  `end_time` datetime DEFAULT NULL COMMENT '投票结束时间',
+  `create_time` datetime NOT NULL COMMENT '添加场次时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='投票主题（场次）表';
 ```
 ```mysql
 CREATE TABLE `email_send_error` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增id',
+  `voting_topic_id` int(11) DEFAULT NULL COMMENT '投票场次id',
   `response_message` text DEFAULT NULL COMMENT '失败原因',
   `send_email_json` text DEFAULT NULL COMMENT '发送邮箱数据',
   `create_time` datetime DEFAULT NULL COMMENT '发送时间',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COMMENT='邮件发送失败记录表';
+  PRIMARY KEY (`id`),
+  KEY `voting_topic_id` (`voting_topic_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='邮件发送失败记录表';
 ```
 
 
@@ -181,13 +185,15 @@ CREATE TABLE `email_send_error` (
 | 500                     |操作失败                         |
 | 1000                     |添加候选人失败                   |
 | 1001                     |添加候选人失败                   |
-| 1002                     |选举已经结束，不可重复操作           |
+| 1002                     |该场次候选人已存在，不可重复添加     |
 | 1003                     |选举已经开始，不可重复操作            |
 | 1004                     |您已经投票过，不可重复投票          |
 | 1005                     |选举未开始                       |
 | 1006                     |投票失败，请稍后再试！              |
 | 1007                     |选举已经结束，无法再投票             |
-| 1008                     |候选人不存在                       |
+| 1008                     |该选举场次对应候选人不存在           |
+| 1009                     |添加投票场次失败                   |
+| 1010                     |该投票场次不存在，请先建选举场次      |
 ### 异常枚举
 ```java
 package com.vote.common.api;
@@ -311,6 +317,9 @@ public class GlobalExceptionHandler {
 # 候选人模块
 
 
+# 候选人模块
+
+
 ## 添加候选人
 
 
@@ -339,7 +348,8 @@ public class GlobalExceptionHandler {
 	"candidateFullName": "",
 	"candidateNickname": "",
 	"gender": 0,
-	"idNumber": ""
+	"idNumber": "",
+	"votingTopicId": 0
 }
 ```
 
@@ -356,6 +366,212 @@ public class GlobalExceptionHandler {
 |&emsp;&emsp;candidateNickname|候选人昵称||false|string||
 |&emsp;&emsp;gender|性别(1男，2女)||false|integer(int32)||
 |&emsp;&emsp;idNumber|候选人身份证号||true|string||
+|&emsp;&emsp;votingTopicId|投票场次id||true|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«boolean»|
+|201|Created||
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||boolean||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": true,
+	"message": ""
+}
+```
+
+
+# 投票主题（场次）
+
+
+## 添加投票主题（场次）
+
+
+**接口地址**:`/vote-admin/addVotingTopic`
+
+
+**请求方式**:`POST`
+
+
+**请求数据类型**:`application/json`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求示例**:
+
+
+```javascript
+{
+	"topicDescribe": "",
+	"topicName": ""
+}
+```
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | in    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|votingTopicParam|votingTopicParam|body|true|投票场次参数|投票场次参数|
+|&emsp;&emsp;topicDescribe|场次主题描述||false|string||
+|&emsp;&emsp;topicName|场次主题名称||false|string||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«boolean»|
+|201|Created||
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||boolean||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": true,
+	"message": ""
+}
+```
+
+
+## 获取所欲选举场次
+
+
+**接口地址**:`/vote-admin/getAllVotingTopicList`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`*`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+暂无
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«List«VotingTopic对象»»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||array|VotingTopic对象|
+|&emsp;&emsp;createTime|添加场次时间|string(date-time)||
+|&emsp;&emsp;endTime|投票结束时间|string(date-time)||
+|&emsp;&emsp;id|自增id|integer(int32)||
+|&emsp;&emsp;startTime|投票开始时间|string(date-time)||
+|&emsp;&emsp;status|状态（0未开始，1启用，2关闭），默认0|integer(int32)||
+|&emsp;&emsp;topicDescribe|场次主题描述|string||
+|&emsp;&emsp;topicName|场次主题名称|string||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": [
+		{
+			"createTime": "",
+			"endTime": "",
+			"id": 0,
+			"startTime": "",
+			"status": 0,
+			"topicDescribe": "",
+			"topicName": ""
+		}
+	],
+	"message": ""
+}
+```
+
+
+## 设置选举开始或者结束
+
+
+**接口地址**:`/vote-admin/startOrend/{type}/{votingTopicId}`
+
+
+**请求方式**:`PUT`
+
+
+**请求数据类型**:`application/json`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | in    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|type|1： 开始；2： 结束|path|true|ref||
+|votingTopicId|场次id|path|true|ref||
 
 
 **响应状态**:
@@ -396,7 +612,7 @@ public class GlobalExceptionHandler {
 ## 查询选举最终结果
 
 
-**接口地址**:`/vote-admin/VoteResult`
+**接口地址**:`/vote-admin/VoteResult/{votingTopicId}`
 
 
 **请求方式**:`GET`
@@ -414,7 +630,9 @@ public class GlobalExceptionHandler {
 **请求参数**:
 
 
-暂无
+| 参数名称 | 参数说明 | in    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|votingTopicId|投票场次id|path|true|ref||
 
 
 **响应状态**:
@@ -435,10 +653,11 @@ public class GlobalExceptionHandler {
 | -------- | -------- | ----- |----- | 
 |code||integer(int64)|integer(int64)|
 |data||array|VoteDetail|
-|&emsp;&emsp;candidate_full_name|候选人|string||
+|&emsp;&emsp;candidateFullName|候选人|string||
 |&emsp;&emsp;id|候选人编号|integer(int32)||
 |&emsp;&emsp;rank|排名|integer(int32)||
 |&emsp;&emsp;votesCount|得票数|integer(int32)||
+|&emsp;&emsp;votingTopicId|投票场次|integer(int32)||
 |message||string||
 
 
@@ -448,10 +667,11 @@ public class GlobalExceptionHandler {
 	"code": 0,
 	"data": [
 		{
-			"candidate_full_name": "",
+			"candidateFullName": "",
 			"id": 0,
 			"rank": 0,
-			"votesCount": 0
+			"votesCount": 0,
+			"votingTopicId": 0
 		}
 	],
 	"message": ""
@@ -462,7 +682,7 @@ public class GlobalExceptionHandler {
 ## 获取实时得票情况
 
 
-**接口地址**:`/vote-admin/candidateVoteList`
+**接口地址**:`/vote-admin/candidateVoteList/{votingTopicId}`
 
 
 **请求方式**:`GET`
@@ -480,7 +700,9 @@ public class GlobalExceptionHandler {
 **请求参数**:
 
 
-暂无
+| 参数名称 | 参数说明 | in    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|votingTopicId|投票场次id|path|true|ref||
 
 
 **响应状态**:
@@ -501,10 +723,11 @@ public class GlobalExceptionHandler {
 | -------- | -------- | ----- |----- | 
 |code||integer(int64)|integer(int64)|
 |data||array|VoteDetail|
-|&emsp;&emsp;candidate_full_name|候选人|string||
+|&emsp;&emsp;candidateFullName|候选人|string||
 |&emsp;&emsp;id|候选人编号|integer(int32)||
 |&emsp;&emsp;rank|排名|integer(int32)||
 |&emsp;&emsp;votesCount|得票数|integer(int32)||
+|&emsp;&emsp;votingTopicId|投票场次|integer(int32)||
 |message||string||
 
 
@@ -514,10 +737,11 @@ public class GlobalExceptionHandler {
 	"code": 0,
 	"data": [
 		{
-			"candidate_full_name": "",
+			"candidateFullName": "",
 			"id": 0,
 			"rank": 0,
-			"votesCount": 0
+			"votesCount": 0,
+			"votingTopicId": 0
 		}
 	],
 	"message": ""
@@ -525,7 +749,7 @@ public class GlobalExceptionHandler {
 ```
 
 
-## 查看投给该候选⼈的⽤⼾列表
+## 查看投给该候选人用户列表列表
 
 
 **接口地址**:`/vote-admin/voteForCandidateUsersList`
@@ -551,6 +775,7 @@ public class GlobalExceptionHandler {
 |candidateId|候选人id|query|true|ref||
 |pageNum|页码|query|true|ref||
 |pageSize|每页大小|query|true|ref||
+|votingTopicId|选举场次id|query|true|ref||
 
 
 **响应状态**:
@@ -577,6 +802,7 @@ public class GlobalExceptionHandler {
 |&emsp;&emsp;&emsp;&emsp;id|自增id|integer(int32)||
 |&emsp;&emsp;&emsp;&emsp;idNumber|投票者身份证号|string||
 |&emsp;&emsp;&emsp;&emsp;voteTime|投票时间|string(date-time)||
+|&emsp;&emsp;&emsp;&emsp;votingTopicId|投票场次id|integer(int32)||
 |&emsp;&emsp;pageNum||integer(int32)||
 |&emsp;&emsp;pageSize||integer(int32)||
 |&emsp;&emsp;total||integer(int64)||
@@ -595,7 +821,8 @@ public class GlobalExceptionHandler {
 				"email": "",
 				"id": 0,
 				"idNumber": "",
-				"voteTime": ""
+				"voteTime": "",
+				"votingTopicId": 0
 			}
 		],
 		"pageNum": 0,
@@ -607,68 +834,10 @@ public class GlobalExceptionHandler {
 }
 ```
 
-
-# 系统选举设置模块
-
-
-## 设置选举开始或者结束
-
-
-**接口地址**:`/vote-admin/startOrend/{type}`
-
-
-**请求方式**:`PUT`
-
-
-**请求数据类型**:`application/json`
-
-
-**响应数据类型**:`*/*`
-
-
-**接口描述**:
-
-
-**请求参数**:
-
-
-| 参数名称 | 参数说明 | in    | 是否必须 | 数据类型 | schema |
-| -------- | -------- | ----- | -------- | -------- | ------ |
-|type|1： 开始；2： 结束|path|true|ref||
-
-
-**响应状态**:
-
-
-| 状态码 | 说明 | schema |
-| -------- | -------- | ----- | 
-|200|OK|CommonResult«boolean»|
-|201|Created||
-|401|Unauthorized||
-|403|Forbidden||
-|404|Not Found||
-
-
-**响应参数**:
-
-
-| 参数名称 | 参数说明 | 类型 | schema |
-| -------- | -------- | ----- |----- | 
-|code||integer(int64)|integer(int64)|
-|data||boolean||
-|message||string||
-
-
-**响应示例**:
-```javascript
-{
-	"code": 0,
-	"data": true,
-	"message": ""
-}
-```
-
 ### 2、简易投票系统portal服务API
+# 普通用户投票
+
+
 # 普通用户投票
 
 
@@ -697,7 +866,8 @@ public class GlobalExceptionHandler {
 {
 	"candidateId": 0,
 	"email": "",
-	"idNumber": ""
+	"idNumber": "",
+	"votingTopicId": 0
 }
 ```
 
@@ -711,6 +881,7 @@ public class GlobalExceptionHandler {
 |&emsp;&emsp;candidateId|候选人id||false|integer(int32)||
 |&emsp;&emsp;email|投票者邮箱||false|string||
 |&emsp;&emsp;idNumber|投票者身份证号||false|string||
+|&emsp;&emsp;votingTopicId|投票场次id||true|integer(int32)||
 
 
 **响应状态**:
@@ -732,10 +903,11 @@ public class GlobalExceptionHandler {
 | -------- | -------- | ----- |----- | 
 |code||integer(int64)|integer(int64)|
 |data||array|VoteDetail|
-|&emsp;&emsp;candidate_full_name|候选人|string||
+|&emsp;&emsp;candidateFullName|候选人|string||
 |&emsp;&emsp;id|候选人编号|integer(int32)||
 |&emsp;&emsp;rank|排名|integer(int32)||
 |&emsp;&emsp;votesCount|得票数|integer(int32)||
+|&emsp;&emsp;votingTopicId|投票场次|integer(int32)||
 |message||string||
 
 
@@ -745,10 +917,11 @@ public class GlobalExceptionHandler {
 	"code": 0,
 	"data": [
 		{
-			"candidate_full_name": "",
+			"candidateFullName": "",
 			"id": 0,
 			"rank": 0,
-			"votesCount": 0
+			"votesCount": 0,
+			"votingTopicId": 0
 		}
 	],
 	"message": ""

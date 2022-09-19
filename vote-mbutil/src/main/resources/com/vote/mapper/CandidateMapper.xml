@@ -5,6 +5,7 @@
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.vote.entity.Candidate">
         <id column="id" property="id" />
+        <result column="voting_topic_id" property="votingTopicId" />
         <result column="candidate_full_name" property="candidateFullName" />
         <result column="id_number" property="idNumber" />
         <result column="candidate_nickname" property="candidateNickname" />

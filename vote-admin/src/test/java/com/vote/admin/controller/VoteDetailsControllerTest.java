@@ -49,9 +49,9 @@ public class VoteDetailsControllerTest {
     @SneakyThrows
     public void candidateVoteList() {
         List<VoteDetail> voteDetailList = new ArrayList<>();
-        Mockito.when(iCommonCacheService.getAllCandidateVoteResult()).thenReturn(voteDetailList);
+        Mockito.when(iCommonCacheService.getAllCandidateVoteResult(Mockito.anyInt())).thenReturn(voteDetailList);
         mockMvc.perform(MockMvcRequestBuilders
-                .get("/vote-admin/candidateVoteList")
+                .get("/vote-admin/candidateVoteList/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk());

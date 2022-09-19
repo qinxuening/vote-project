@@ -15,6 +15,8 @@
             id,email
         FROM
             vote_details
+        WHERE
+            voting_topic_id = #{votingTopicId}
         ORDER BY id ASC
         LIMIT 1
     </select>
@@ -24,7 +26,7 @@
         FROM
             vote_details
         WHERE
-            id > #{LastMaxId}
+            id > #{LastMaxId} and voting_topic_id = #{votingTopicId}
         LIMIT 2
     </select>
 </mapper>

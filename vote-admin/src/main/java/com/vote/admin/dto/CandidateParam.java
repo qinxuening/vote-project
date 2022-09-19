@@ -4,11 +4,9 @@ import com.vote.common.validator.HkIDValidator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.util.List;
 
 /**
  * @author qinxuening
@@ -17,6 +15,10 @@ import java.util.List;
 @ApiModel(value = "添加候选人参数")
 @Data
 public class CandidateParam {
+    @NotNull(message = "投票场次id不能为空")
+    @ApiModelProperty(value = "投票场次id" , required = true)
+    private Integer votingTopicId;
+
     @NotBlank(message = "候选人全名不能为空")
     @ApiModelProperty(value = "候选人全名" , required = true)
     private String candidateFullName;

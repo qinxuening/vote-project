@@ -5,6 +5,7 @@
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.vote.entity.EmailSendError">
         <id column="id" property="id" />
+        <result column="voting_topic_id" property="votingTopicId" />
         <result column="response_message" property="responseMessage" />
         <result column="send_email_json" property="sendEmailJson" />
         <result column="create_time" property="createTime" />

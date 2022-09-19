@@ -6,8 +6,6 @@ import com.vote.common.dto.VoteDetail;
 import com.vote.common.service.ICommonCacheService;
 import com.vote.common.service.IRedisCacheService;
 import com.vote.entity.Candidate;
-import com.vote.entity.SysSettings;
-import com.vote.mapper.SysSettingsMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,35 +21,21 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @Service
 public class ICommonCacheServiceImpl implements ICommonCacheService {
-    @Autowired
-    private SysSettingsMapper sysSettingsMapper;
 
     @Autowired
     private IRedisCacheService iRedisCacheService;
 
     @Override
-    public SysSettings getDoElectionInfo() {
-        Object o = iRedisCacheService.get(Constants.DO_ELECTION_SYS_INFO);
-        if (o == null) {
-            QueryWrapper<SysSettings> wrapper = new QueryWrapper<>();
-            wrapper.lambda().eq(SysSettings::getGroupCode, Constants.VOTE).eq(SysSettings::getFieldName, Constants.DO_ELECTION);
-            SysSettings sysSettings = sysSettingsMapper.selectOne(wrapper);
-            iRedisCacheService.set(Constants.DO_ELECTION_SYS_INFO, sysSettings);
-            return sysSettings;
-        }
-        return (SysSettings) o;
-    }
-
-    @Override
-    public List<VoteDetail> getAllCandidateVoteResult() {
-        Set<Object> candidateSet = iRedisCacheService.sMembers(Constants.CANDIDATE_INFO);
+    public List<VoteDetail> getAllCandidateVoteResult(Integer votingTopicId) {
+        Set<Object> candidateSet = iRedisCacheService.sMembers(Constants.CANDIDATE_INFO + votingTopicId);
         List<VoteDetail> voteDetailList = new ArrayList<>();
         candidateSet.forEach(b -> {
             Candidate candidate = (Candidate) b;
             VoteDetail voteDetail = new VoteDetail();
             voteDetail.setId(candidate.getId());
-            voteDetail.setCandidate_full_name(candidate.getCandidateFullName());
-            voteDetail.setVotesCount((Integer) iRedisCacheService.get(Constants.CANDIDATE_COUNT_PRE + candidate.getId()));
+            voteDetail.setVotingTopicId(votingTopicId);
+            voteDetail.setCandidateFullName(candidate.getCandidateFullName());
+            voteDetail.setVotesCount((Integer) iRedisCacheService.get(Constants.CANDIDATE_COUNT_PRE + votingTopicId + candidate.getId()));
             voteDetailList.add(voteDetail);
         });
         // 排序,排名

@@ -8,6 +8,9 @@ import com.vote.common.api.ErrorCode;
  * @date 2022/9/12 23:05
  */
 public class GlobalAsserts {
+    private GlobalAsserts() {
+
+    }
     public static void fail(String message) {
         throw new ApiException(message);
     }

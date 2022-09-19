@@ -1,6 +1,6 @@
 package com.vote.portal.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.vote.common.api.ResultCode;
@@ -9,9 +9,10 @@ import com.vote.common.dto.VoteDetail;
 import com.vote.common.exception.GlobalAsserts;
 import com.vote.common.service.ICommonCacheService;
 import com.vote.common.service.IRedisCacheService;
+import com.vote.common.util.CommonUtilService;
 import com.vote.entity.Candidate;
-import com.vote.entity.SysSettings;
 import com.vote.entity.VoteDetails;
+import com.vote.entity.VotingTopic;
 import com.vote.mapper.VoteDetailsMapper;
 import com.vote.portal.dto.VoteParam;
 import com.vote.portal.exception.PortalException;
@@ -40,21 +41,28 @@ public class VoteServiceImpl  extends ServiceImpl<VoteDetailsMapper, VoteDetails
 
     @Override
     public List<VoteDetail> vote(VoteParam voteParam) {
-        SysSettings doElectionInfo = iCommonCacheService.getDoElectionInfo();
+        VotingTopic votingTopic = CommonUtilService.findVotingTopicInfo(voteParam.getVotingTopicId());
+
+        // 检测投票场次是否存在
+        if (votingTopic == null) {
+            GlobalAsserts.fail(ResultCode.NOT_EXSIT_VOTING_TOPIC);
+        }
         // 判断选举是否开始
-        if (StrUtil.isBlank(doElectionInfo.getFieldValue())) {
+        if (Objects.isNull(votingTopic.getStatus())) {
             GlobalAsserts.fail(ResultCode.ELECTION_NOT_START);
         }
         // 判断候选人是否存在
-        if (getAllCandidateIds() !=null && !getAllCandidateIds().contains(voteParam.getCandidateId())) {
+        if (getAllCandidateIds(voteParam.getVotingTopicId()) !=null && !getAllCandidateIds(voteParam.getVotingTopicId()).contains(voteParam.getCandidateId())) {
             GlobalAsserts.fail(PortalException.CANDIDATE_NOT_EXIST);
         }
         // 选举已结束，不可再投票
-        if (Objects.equals(Integer.valueOf(doElectionInfo.getFieldValue()), Constants.VOTE_END) ) {
+        if (Objects.equals(votingTopic.getStatus(), Constants.VOTE_END) ) {
             GlobalAsserts.fail(ResultCode.ELECTION_END);
         }
         // 已经投票过，不可重复投票
-        VoteDetails result = this.getOne(Wrappers.<VoteDetails>lambdaQuery().eq(VoteDetails::getIdNumber, voteParam.getIdNumber()));
+        VoteDetails result = this.getOne(Wrappers.<VoteDetails>lambdaQuery().eq(VoteDetails::getIdNumber, voteParam.getIdNumber())
+                .eq(VoteDetails::getCandidateId, voteParam.getCandidateId())
+                .eq(VoteDetails::getVotingTopicId, voteParam.getVotingTopicId()));
         if (result != null) {
             GlobalAsserts.fail(PortalException.YOU_HAD_VOTED);
         }
@@ -64,14 +72,14 @@ public class VoteServiceImpl  extends ServiceImpl<VoteDetailsMapper, VoteDetails
             GlobalAsserts.fail(PortalException.VOTE_FAIL);
         }
         // 累加候选人得票 + 1
-        iRedisCacheService.incr(Constants.CANDIDATE_COUNT_PRE + voteParam.getCandidateId(), 1);
+        iRedisCacheService.incr(Constants.CANDIDATE_COUNT_PRE + voteParam.getVotingTopicId() + voteParam.getCandidateId(), 1);
 
         // 获取所有候选人得票情况
-        return iCommonCacheService.getAllCandidateVoteResult();
+        return iCommonCacheService.getAllCandidateVoteResult(voteParam.getVotingTopicId());
     }
 
-    public List<Integer> getAllCandidateIds() {
-        Set<Object> candidateSet = iRedisCacheService.sMembers(Constants.CANDIDATE_INFO);
+    public List<Integer> getAllCandidateIds(Integer votingTopicId) {
+        Set<Object> candidateSet = iRedisCacheService.sMembers(Constants.CANDIDATE_INFO + votingTopicId);
         List<Integer> voteIdList = new ArrayList<>();
         candidateSet.forEach(b -> voteIdList.add(((Candidate) b).getId()));
         return voteIdList;
