@@ -3,7 +3,6 @@ package com.vote.admin.controller;
 import com.alibaba.fastjson.JSON;
 import com.vote.admin.dto.VotingTopicParam;
 import com.vote.admin.service.IVotingTopicService;
-import com.vote.entity.VotingTopic;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;

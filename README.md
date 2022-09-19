@@ -475,7 +475,7 @@ public class GlobalExceptionHandler {
 ```
 
 
-## 获取所欲选举场次
+## 获取所有选举场次
 
 
 **接口地址**:`/vote-admin/getAllVotingTopicList`

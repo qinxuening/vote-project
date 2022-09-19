@@ -27,7 +27,7 @@ public interface IVotingTopicService extends IService<VotingTopic> {
 
 
     /**
-     * 获取所欲选举场次
+     * 获取所有选举场次
      * @return
      */
     List<VotingTopic> getAllVotingTopicList();

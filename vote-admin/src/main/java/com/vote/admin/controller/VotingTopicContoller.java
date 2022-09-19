@@ -46,7 +46,7 @@ public class VotingTopicContoller {
         return CommonResult.success();
     }
 
-    @ApiOperation(value = "获取所欲选举场次")
+    @ApiOperation(value = "获取所有选举场次")
     @GetMapping(value = "/getAllVotingTopicList")
     @ResponseBody
     public CommonResult<List<VotingTopic>> getAllVotingTopicList() {
